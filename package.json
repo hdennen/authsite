@@ -1,0 +1,11 @@
+{
+  "name": "authsite",
+  "version": "1.0.0",
+  "description": "express authorisation of legacy website",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC"
+}
