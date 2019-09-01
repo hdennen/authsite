@@ -1,9 +1,11 @@
 const express = require('express');
 const serveStatic = require('serve-static');
 const rp = require('request-promise-native');
-const app = express();
+const CronJob = require('cron').CronJob;
 
-const port = process.env.PORT || 3000; // prod port needs to be set for node as environment variable
+const app = express();
+const port = process.env.PORT || 3000;
+
 const endpoint = 'https://betapistaging.hollywoodbets.net:443/api/punters/checkexistingclient?searchString=';
 
 const ipMap = new Map();
@@ -57,10 +59,16 @@ function checkUser(req, res, next) {
         });
 }
 
+
+
 app.use(checkUser);
 app.use(serveStatic('guide'));
 app.listen(port, () => {
     console.dir(`Listening on port ${port}`);
     console.dir(`validation endpoint: ${endpoint}`);
 });
+
+new CronJob('0 0 0 * * *', () => {
+    ipMap.clear();
+}, null, true, 'Africa/Johannesburg');
 
