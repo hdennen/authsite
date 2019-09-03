@@ -24,7 +24,7 @@ function externalAuth(authToken) {
     return rp(options)
 }
 
-function validate(authRes) {
+function isValid(authRes) {
     return authRes.responseMessage === 'Success';
 }
 
@@ -38,19 +38,19 @@ function checkCache(ip) {
 
 function checkUser(req, res, next) {
     // must put token on query '?authToken='
-    cachedValid = checkCache(req.ip);
 
-    if (cachedValid) {
+    if (checkCache(req.ip)) {
         next();
         return;
     }
 
+    if (!req.query.authToken) redirect(res);
+
     externalAuth(req.query.authToken)
         .then((authRes) => {
-            const isValid = validate(authRes);
 
-            if (isValid) {
-                ipMap.set(req.ip, 1);
+            if (isValid(authRes)) {
+                ipMap.set(req.ip, new Date(Date.now()));
                 next();
             } else redirect(res);
         })
@@ -59,16 +59,22 @@ function checkUser(req, res, next) {
         });
 }
 
-
+let options = {
+    extensions: ['htm', 'html'],
+    index: 'index.htm'
+};
 
 app.use(checkUser);
-app.use(serveStatic('guide'));
+app.use(serveStatic('guide', options));
 app.listen(port, () => {
     console.dir(`Listening on port ${port}`);
     console.dir(`validation endpoint: ${endpoint}`);
 });
 
-new CronJob('0 0 0 * * *', () => {
-    ipMap.clear();
+new CronJob('* * * * *', () => {
+    let now = new Date(Date.now());
+    ipMap.forEach((item, key)  => {
+        if (item > now) ipMap.delete(key);
+    });
 }, null, true, 'Africa/Johannesburg');
 
